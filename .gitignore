@@ -1,0 +1,25 @@
+# 输出目录
+outputs/
+svg_art/
+# . 开头的隐藏文件与缓存文件夹
+.*
+!/.gitignore
+
+# _ 开头的缓存文件夹
+_*/
+
+# 模型/数据文件
+*.vue
+*.mdb
+*.mdb2
+*.iop
+*.obj
+*.fbx
+*.glb
+*.nwc
+*.nwf
+*.csv
+
+# Python bytecode
+__pycache__/
+*.py[cod]

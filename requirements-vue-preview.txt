@@ -1,0 +1,2 @@
+# Additional dependency for boundary-preserving annular caps.
+mapbox-earcut>=1.0.3,<3
