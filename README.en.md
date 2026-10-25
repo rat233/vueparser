@@ -8,6 +8,16 @@ VueParser converts Smart 3D `.vue` geometry into GLB, OBJ, and binary FBX. It su
 
 Python 3.10 or later is required when running from source. Geometry conversion uses `numpy`, `scipy`, `trimesh`, and `mapbox-earcut`. FBX export also requires `pyassimp` and an Assimp dynamic library it can load. MDB2 property import requires `access-parser`.
 
+This project uses a system Python installation. The VS Code workspace configuration disables automatic terminal environment activation and selects the system environment manager. This machine uses `C:\Users\Sujf\AppData\Local\Programs\Python\Python310\python.exe`; on another machine, update `python.defaultInterpreterPath` in `.vscode/settings.json` to that machine's system Python path.
+
+After switching environments, close old terminals and open a new terminal. Check the interpreter from the project root:
+
+```powershell
+python -c "import sys; print(sys.executable); print(sys.prefix == sys.base_prefix)"
+```
+
+The first line should show the system Python path, and the second should be `True`. Dependency installation, execution and build commands below use this interpreter.
+
 ```powershell
 python -m pip install numpy scipy trimesh pyassimp
 python -m pip install -r requirements-vue-preview.txt

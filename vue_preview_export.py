@@ -3761,15 +3761,15 @@ def build_export_tree(solid_pieces, line_pieces):
         # Content-addressed reuse: identical arrays (shared instances of the
         # same primitive/material data) map to one accessor + bufferView, as
         # trimesh's exporter did.
+        raw = array.tobytes()
         key = (component, type_, target, normalized, bounds, array.shape,
-               hashlib.blake2b(array.tobytes(), digest_size=16).digest())
+               hashlib.blake2b(raw, digest_size=16).digest())
         if key in reused:
             return reused[key]
         padding = (-len(out)) % 4
         if padding:
             out.extend(b'\x00' * padding)
         offset = len(out)
-        raw = array.tobytes()
         out.extend(raw)
         views.append(dict(buffer=0, byteOffset=offset, byteLength=len(raw),
                           target=target))
@@ -3788,8 +3788,8 @@ def build_export_tree(solid_pieces, line_pieces):
     node_items = []  # (discipline, owner, node_dict)
 
     def append_solid(item):
-        positions = np.asarray(item['export_vertices'], dtype=float).astype('<f4')
-        normals = np.asarray(item['export_normals'], dtype=float).astype('<f4')
+        positions = np.asarray(item['export_vertices'], dtype='<f4')
+        normals = np.asarray(item['export_normals'], dtype='<f4')
         indices = np.asarray(item['export_faces'], dtype=np.int64).reshape(-1)
         use_small = len(positions) <= 65536
         index_array = indices.astype('<u2' if use_small else '<u4')
@@ -3813,7 +3813,7 @@ def build_export_tree(solid_pieces, line_pieces):
                                 translation=[float(v) for v in item['origin']])))
 
     def append_line(item):
-        positions = np.asarray(item['local_vertices'], dtype=float).astype('<f4')
+        positions = np.asarray(item['local_vertices'], dtype='<f4')
         edges = np.asarray(item['faces'], dtype=np.int64).reshape(-1)
         color = np.rint(line_color_for(item) * 255).astype(np.uint8)
         colors = np.tile(color, (len(positions), 1))
@@ -4092,12 +4092,13 @@ def export_sample(path, destination, options=None, progress=None):
         else:
             print('No same-stem MDB2 found; exporting VUE geometry only.', flush=True)
     destination.mkdir(parents=True, exist_ok=True)
-    material_report = dict(input_sha256=hashlib.sha256(data).hexdigest(),
-        source='VUE only; record+0x3c absolute material pointer; no reference FBX input',
-        fields={'diffuse_rgb':'material+0x30 f32[3], duplicate +0x58',
-                'opacity':'material+0x54 f32, duplicate +0x64; 1 opaque, 0.5 half opacity'},
-        records=list(native.values()))
+    input_sha256 = hashlib.sha256(data).hexdigest()
     if settings.reports:
+        material_report = dict(input_sha256=input_sha256,
+            source='VUE only; record+0x3c absolute material pointer; no reference FBX input',
+            fields={'diffuse_rgb':'material+0x30 f32[3], duplicate +0x58',
+                    'opacity':'material+0x54 f32, duplicate +0x64; 1 opaque, 0.5 half opacity'},
+            records=list(native.values()))
         (destination/'materials.json').write_text(json.dumps(material_report, ensure_ascii=False, indent=2), encoding='utf-8')
     pieces, rows, gaps, counts = [], [], [], Counter()
     reference_rows = []
@@ -4801,7 +4802,7 @@ def export_sample(path, destination, options=None, progress=None):
                 writer.writeheader()
                 writer.writerows(items)
     included = {p['record_offset'] for p in pieces if not p['placeholder']}
-    summary = dict(sample=path.stem, input_sha256=hashlib.sha256(data).hexdigest(),
+    summary = dict(sample=path.stem, input_sha256=input_sha256,
                    records=len(records), objects_with_geometry=len(included),
                    objects_without_geometry=len(records)-len(included), primitives=dict(counts),
                    tentative_primitives=sum(r['tentative'] is True for r in rows),

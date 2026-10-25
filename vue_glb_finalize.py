@@ -27,9 +27,9 @@ def encode_glb(tree,binary):
     payload=json.dumps(tree,ensure_ascii=False,separators=(',',':'),allow_nan=False).encode('utf-8')
     payload+=b' '*((-len(payload))%4)
     binary+=b'\x00'*((-len(binary))%4)
-    return (struct.pack('<4sII',b'glTF',2,28+len(payload)+len(binary))+
-            struct.pack('<I4s',len(payload),b'JSON')+payload+
-            struct.pack('<I4s',len(binary),b'BIN\x00')+binary)
+    return b''.join((struct.pack('<4sII',b'glTF',2,28+len(payload)+len(binary)),
+                     struct.pack('<I4s',len(payload),b'JSON'),payload,
+                     struct.pack('<I4s',len(binary),b'BIN\x00'),binary))
 
 
 def node_matrix(node):

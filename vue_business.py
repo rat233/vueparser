@@ -82,7 +82,11 @@ def apply_business_tree(tree, business):
         for count in range(1, len(parts)+1):
             prefix = parts[:count]
             if prefix not in directories:
-                directories[prefix] = attach({'name': prefix[-1]}, directories[prefix[:-1]])
+                candidates = hosts.get((prefix[:-1], prefix[-1]), [])
+                if len(candidates) == 1:
+                    directories[prefix] = place(candidates[0])
+                else:
+                    directories[prefix] = attach({'name': prefix[-1]}, directories[prefix[:-1]])
         return directories[parts]
     prepared = {}
     for identity, obj in sorted(objects.items()):
@@ -113,6 +117,12 @@ def apply_business_tree(tree, business):
     hosts = {}
     for identity, (parts, name) in prepared.items():
         hosts.setdefault((parts, name), []).append(identity)
+    # Distinct identities (e.g. body and insulation) can share a business
+    # address. Preserve them under one neutral assembly instead of guessing
+    # which one owns the nozzles. Missing paths are not assembly evidence.
+    shared_hosts = {key for key, identities in hosts.items() if len(identities) > 1
+                    and all(present(objects[i]['properties'].get('System Path'))
+                            for i in identities)}
     parent_object = {}
     ambiguous_hosts = []
     for identity, (parts, name) in prepared.items():
@@ -122,8 +132,8 @@ def apply_business_tree(tree, business):
             if len(candidates) == 1:
                 parent_object[identity] = candidates[0]
             elif len(candidates) > 1:
-                # Same path and name cannot prove which object is the parent;
-                # keep the inferred directory node and record the ambiguity.
+                # Keep the ambiguity in the report; the shared directory owns
+                # both candidates and their attachments without merging IDs.
                 ambiguous_hosts.append(identity)
     owner_nodes = {}
     used_names = set()
@@ -154,8 +164,8 @@ def apply_business_tree(tree, business):
         if identity in placing:  # 防御环形 System Path
             return directory(prepared[identity][0])
         placing.add(identity)
-        host = parent_object.get(identity)
-        parent = place(host) if host is not None else directory(prepared[identity][0])
+        parts, name = prepared[identity]
+        parent = directory(parts + (name,)) if (parts, name) in shared_hosts else directory(parts)
         placing.discard(identity)
         owner_nodes[identity] = attach(pending[identity], parent)
         return owner_nodes[identity]
@@ -183,9 +193,12 @@ def apply_business_tree(tree, business):
     tree['scene'] = 0
     tree.setdefault('extras', {})['vue_business'] = dict(version=1, source=business['source'],
         hierarchy='System Path + Name; inferred directory nodes', properties='node.extras.properties')
-    business['report'].update(object_nodes=len(owner_nodes), directory_nodes=len(directories)-1,
+    business['report'].update(object_nodes=len(owner_nodes),
+                              directory_nodes=sum('moniker' not in nodes[i].get('extras', {})
+                                                  for i in set(directories.values()) if i != 0),
                               geometry_nodes=sum(counts.values()), objects_with_geometry=len(counts),
                               mounted_to_parent=len(parent_object),
+                              shared_object_groups=len(shared_hosts),
                               ambiguous_mounts=len(ambiguous_hosts))
 
 

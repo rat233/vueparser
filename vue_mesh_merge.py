@@ -16,7 +16,11 @@ def prepare_moniker_groups(pieces):
         specs.append(dict(name=name,moniker=moniker,parts=[p['name'] for p in parts],
                           record_offsets=sorted({p['record_offset'] for p in parts}),origin=origin.tolist()))
         for p in parts:
-            result.append(dict(p,origin=origin,local_vertices=p['local_vertices']+(p['origin']-origin)))
+            delta=p['origin']-origin
+            vertices=p['local_vertices']
+            if np.any(delta):
+                vertices=vertices+delta
+            result.append(dict(p,origin=origin,local_vertices=vertices))
     return result,specs
 
 

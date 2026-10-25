@@ -22,6 +22,55 @@ def fixture():
 
 
 class BusinessTests(unittest.TestCase):
+    def test_insulated_equipment_uses_one_root_and_preserves_geometry(self):
+        for merge in (False, True):
+            with self.subTest(merge=merge), tempfile.TemporaryDirectory() as d:
+                source = pieces()
+                source[1] = dict(source[1], moniker='B')
+                source[2] = dict(source[2], moniker='C')
+                business = dict(source='sample', report={}, mdb_ids={'A', 'B', 'C', 'D'}, objects={
+                    'A': dict(in_vue=True, properties={'System Path': 'Site\\Equipment', 'Name': 'Vessel'}),
+                    'B': dict(in_vue=True, properties={'System Path': 'Site\\Equipment', 'Name': 'Vessel'}),
+                    'C': dict(in_vue=True, properties={'System Path': 'Site\\Equipment\\Vessel', 'Name': 'Nozzle'}),
+                    'D': dict(in_vue=False, properties={'System Path': 'Site\\Equipment\\Vessel\\Supports', 'Name': 'Foot'})})
+                base = Path(d) / 'equipment'
+                write_models(base, source, ExportOptions('glb', False, merge), business)
+                tree = gltf_json(base.with_suffix('.glb'))
+                nodes = tree['nodes']
+                owners = {n['extras']['moniker']:i for i,n in enumerate(nodes)
+                          if 'moniker' in n.get('extras', {})}
+                parents = {c:i for i,n in enumerate(nodes) for c in n.get('children', [])}
+                roots = [i for i,n in enumerate(nodes) if n.get('name') == 'Vessel']
+                self.assertEqual(len(roots), 1)
+                root = roots[0]
+                self.assertEqual({parents[owners[i]] for i in ('A', 'B', 'C')}, {root})
+                self.assertEqual(parents[parents[owners['D']]], root)
+                self.assertEqual(len(owners), 4)
+                self.assertEqual(business['report']['shared_object_groups'], 1)
+                self.assertEqual(business['report']['directory_nodes'], 4)
+                scene = trimesh.load(base.with_suffix('.glb'), force='scene')
+                expected = np.vstack([p['local_vertices'] + p['origin'] for p in source])[:,[0,2,1]] * [1,1,-1]
+                np.testing.assert_allclose(scene.bounds, [expected.min(0), expected.max(0)], atol=1e-7, rtol=0)
+                self.assertEqual(sum(len(m.faces) for m in scene.geometry.values()), 36)
+                self.assertTrue(any(m.get('alphaMode') == 'BLEND' for m in tree['materials']))
+
+    def test_unique_equipment_owns_nested_attachment_directories(self):
+        business = dict(source='sample', report={}, mdb_ids={'Z', 'A'}, objects={
+            'Z': dict(in_vue=True, properties={'System Path': 'Site', 'Name': 'Vessel'}),
+            'A': dict(in_vue=True, properties={'System Path': 'Site\\Vessel\\Supports', 'Name': 'Foot'})})
+        source = [dict(p, moniker='Z' if p['moniker'] == 'A' else 'A') for p in pieces()]
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d) / 'equipment'
+            write_models(base, source, ExportOptions('glb', False, True), business)
+            nodes = gltf_json(base.with_suffix('.glb'))['nodes']
+            vessel = next(n for n in nodes if n.get('name') == 'Vessel')
+            self.assertEqual(len([n for n in nodes if n.get('name') == 'Vessel']), 1)
+            self.assertEqual(nodes[vessel['children'][0]]['name'], 'Supports')
+            self.assertIn('mesh', vessel)
+            scene = trimesh.load(base.with_suffix('.glb'), force='scene')
+            expected = np.vstack([p['local_vertices'] + p['origin'] for p in source])[:,[0,2,1]] * [1,1,-1]
+            np.testing.assert_allclose(scene.bounds, [expected.min(0), expected.max(0)], atol=1e-7, rtol=0)
+
     def test_tree_and_geometry_in_both_merge_modes(self):
         for merge in (False, True):
             with self.subTest(merge=merge), tempfile.TemporaryDirectory() as d:

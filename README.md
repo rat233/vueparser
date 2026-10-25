@@ -8,6 +8,16 @@ VueParser 将 Smart 3D 的 `.vue` 几何数据转换为 GLB、OBJ 和二进制 F
 
 需要 Python 3.10 或更高版本。模型转换使用 `numpy`、`scipy`、`trimesh` 和 `mapbox-earcut`；FBX 转换还需要 `pyassimp` 及可由它加载的 Assimp 动态库。读取 MDB2 属性需要 `access-parser`。
 
+本项目使用系统安装的 Python。VS Code 的项目配置已关闭终端环境自动激活，并选择系统 Python 环境管理器。本机解释器为 `C:\Users\Sujf\AppData\Local\Programs\Python\Python310\python.exe`；在其他电脑上打开项目时，将 `.vscode/settings.json` 中的 `python.defaultInterpreterPath` 改为该电脑的系统 Python 路径。
+
+切换环境后请关闭旧终端并新建终端，在项目根目录检查解释器：
+
+```powershell
+python -c "import sys; print(sys.executable); print(sys.prefix == sys.base_prefix)"
+```
+
+第一行应为系统 Python 路径，第二行应为 `True`。依赖安装和下文运行、构建命令均使用该解释器。
+
 ```powershell
 python -m pip install numpy scipy trimesh pyassimp
 python -m pip install -r requirements-vue-preview.txt
