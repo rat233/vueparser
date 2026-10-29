@@ -1,5 +1,13 @@
 # VueParser
 
+Chinese format reference: [VUE / MDB2 internal structure and parsing guide](docs/VUE_MDB2_FORMAT.md).
+
+VUE structure atlas: [interactive HTML](docs/vue-structure/dist/index.html), [PDF](docs/vue-structure/dist/VUE_STRUCTURE.pdf), [SVG](docs/vue-structure/dist/VUE_STRUCTURE.svg), and [PNG](docs/vue-structure/dist/VUE_STRUCTURE.png). The HTML works offline and expands each module into its field layout.
+
+The [HEX comparison view](docs/vue-structure/dist/hex.html) pairs synthetic bytes on the left with matching field colors on the right. It includes a [PDF](docs/vue-structure/dist/VUE_HEX_GUIDE.pdf) and a [record-header diagram](docs/vue-structure/dist/VUE_HEX_record.svg).
+
+The [geometry visual guide](docs/vue-structure/dist/primitives.html) adds 16 original illustrations, with [PNG](docs/vue-structure/dist/VUE_PRIMITIVES.png), [SVG](docs/vue-structure/dist/VUE_PRIMITIVES.svg), and an [illustrated HEX PDF](docs/vue-structure/dist/VUE_HEX_ILLUSTRATED.pdf).
+
 [简体中文](README.md) | **English**
 
 VueParser converts Smart 3D `.vue` geometry into GLB, OBJ, and binary FBX. It supports merging meshes by component and incorporating business hierarchies and properties from MDB2 databases into GLB. The output is a visualization preview: some placements use candidate geometry or diagnostic bounding boxes, so the result should not be treated as a fully decoded solid model.

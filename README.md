@@ -4,6 +4,14 @@
 
 VueParser 将 Smart 3D 的 `.vue` 几何数据转换为 GLB、OBJ 和二进制 FBX。支持按构件合并网格，并将 MDB2 数据库中的业务树和属性整合到 GLB。转换结果是可视化预览：部分布局仍采用候选几何或诊断包围盒，不能将模型视为完整解析的实体。
 
+文件结构与解析原理见 [VUE / MDB2 文件内部结构与解析说明](docs/VUE_MDB2_FORMAT.md)，包含字段偏移、几何布局、属性关联、结构图和通用解析示例。
+
+VUE 结构图：[交互页面](docs/vue-structure/dist/index.html) · [PDF](docs/vue-structure/dist/VUE_STRUCTURE.pdf) · [SVG](docs/vue-structure/dist/VUE_STRUCTURE.svg) · [PNG](docs/vue-structure/dist/VUE_STRUCTURE.png)。页面可离线打开，点击模块查看详细字段。
+
+新增 [HEX 字节与字段对照版](docs/vue-structure/dist/hex.html)：左侧显示虚构 HEX 示例，右侧以相同颜色说明字段；附 [完整 PDF](docs/vue-structure/dist/VUE_HEX_GUIDE.pdf) 和 [对象头示例图](docs/vue-structure/dist/VUE_HEX_record.svg)。
+
+[图元形状速览](docs/vue-structure/dist/primitives.html) 包含 16 幅原创参数与构形示意，已嵌入说明文档和 HEX 对照页；另有 [PNG](docs/vue-structure/dist/VUE_PRIMITIVES.png)、[SVG](docs/vue-structure/dist/VUE_PRIMITIVES.svg) 和 [图例 + HEX 图解 PDF](docs/vue-structure/dist/VUE_HEX_ILLUSTRATED.pdf)。
+
 ## 环境与依赖
 
 需要 Python 3.10 或更高版本。模型转换使用 `numpy`、`scipy`、`trimesh` 和 `mapbox-earcut`；FBX 转换还需要 `pyassimp` 及可由它加载的 Assimp 动态库。读取 MDB2 属性需要 `access-parser`。
